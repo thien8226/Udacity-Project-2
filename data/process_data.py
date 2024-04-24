@@ -41,6 +41,7 @@ def clean_data(df):
 def save_data(df, database_filename):
     engine = create_engine(f'sqlite:///{database_filename}')
     df.to_sql("disaster_data_table", engine, index=False)  
+    df.to_csv(r'data\disaster_merged_data.csv')
 
 
 def main():

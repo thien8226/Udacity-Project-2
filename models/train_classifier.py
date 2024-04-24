@@ -26,11 +26,11 @@ nltk.download(['punkt', 'wordnet'])
 
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
-from joblib import dump
+from joblib import dump, load
 
 def load_data(database_filepath):
     engine = create_engine(f'sqlite:///{database_filepath}')
-    df = pd.read_sql_table('disaster_data_table',engine)
+    df = pd.read_sql_table('DisasterResponse_Table',engine)
     category_names = list(set(df.columns)-{'id', 'message', 'original', 'genre'})
     
     X = df['message'].values
@@ -58,29 +58,34 @@ def build_model():
     ])
 
     parameters = {
-        # 'vect__ngram_range': ((1, 1), (1, 2)),
+        'vect__ngram_range': ((1, 1), (1, 2)),
         'clf__estimator__n_estimators': [50],
-        # 'clf__estimator__min_samples_split': [2, 3]
     }
 
-    cv = GridSearchCV(pipeline, param_grid=parameters)
+    cv = GridSearchCV(pipeline, param_grid=parameters, n_jobs=-1)
     
     return cv
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    y_pred = model.predict(X_test)
+    Y_pred = model.predict(X_test)
     
     for i in range(len(category_names)):
         print('classification Report for Class',category_names[i])
-        print(classification_report(y_test[:,i], y_pred[:,i]))
+        print(classification_report(Y_test[:,i], Y_pred[:,i]))
         
     
 def save_model(model, model_filepath):
     # Save to file in the current working directory
     dump(model, model_filepath)
-
+    model = load(model_filepath)
 
 def main():
+    import sklearn
+    import numpy
+    
+    print('sklearn.__version__:',sklearn.__version__)
+    print('numpy.__version__:',numpy.__version__)
+
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
