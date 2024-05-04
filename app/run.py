@@ -1,16 +1,13 @@
 import json
 import plotly
 import pandas as pd
-
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-
 from flask import Flask
-from flask import render_template, request, jsonify
-from plotly.graph_objs import Bar
+from flask import render_template, request
 import joblib
 from sqlalchemy import create_engine
-
+from templates.plot_function import *
 
 app = Flask(__name__)
 
@@ -40,33 +37,14 @@ def index():
     
     # extract data needed for visuals
     # TODO: Below is an example - modify to extract data for your own visuals
-    genre_counts = df.groupby('genre').count()['message']
-    genre_names = list(genre_counts.index)
-    
-    
+    plot_1 = genres_distribution_plot(df)
+    # plot_2 = label_distribution_plot(df)
+    plot_3, tfidf_df = word_cloud_plot(df)
+    plot_4 = pca_visualization_plot(df, tfidf_df)
 
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
-    graphs = [
-        {
-            'data': [
-                Bar(
-                    x=genre_names,
-                    y=genre_counts
-                )
-            ],
-
-            'layout': {
-                'title': 'Distribution of Message Genres',
-                'yaxis': {
-                    'title': "Count"
-                },
-                'xaxis': {
-                    'title': "Genre"
-                }
-            }
-        }
-    ]
+    graphs = [plot_1, plot_3, plot_4]
     
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
