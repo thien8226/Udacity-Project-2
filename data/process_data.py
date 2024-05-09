@@ -1,22 +1,23 @@
 import sys
-# import libraries
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, mean_squared_error, r2_score
-import pickle
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-import seaborn as sns
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sqlalchemy import create_engine
 
 def load_data(messages_filepath, categories_filepath):
+    """
+    Load messages and categories data from specified file paths, process the categories
+    data into binary format and merge with messages data on 'id'.
+
+    Parameters:
+    messages_filepath (str): File path for the messages data CSV.
+    categories_filepath (str): File path for the categories data CSV.
+
+    Returns:
+    pd.DataFrame: Merged DataFrame containing processed messages and categories.
+    """
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
     
-    # get the column names
+    # get the column names from first row of categories data
     column_names = []
     sample_data = categories.loc[0,'categories'].split(';')
     for x in sample_data:
@@ -29,22 +30,48 @@ def load_data(messages_filepath, categories_filepath):
     
     # create a dataframe of the 36 individual category columns
     categories[column_names] = temp_dummy_df
-    df = pd.merge(messages, categories.drop('categories',axis=1), on='id')
+    categories = categories.drop('categories',axis=1)
+
+    # remove non binary data in one hot dummy columns
+    for column in categories.columns[1:]:
+        categories = categories[categories[column].isin([0,1])]
+
+    df = pd.merge(messages, categories, on='id')
         
     return df
 
 def clean_data(df):
+    """
+    Remove duplicate records from the dataframe.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame to be deduplicated.
+
+    Returns:
+    pd.DataFrame: Deduplicated DataFrame.
+    """
     df = df.drop_duplicates(subset=list(df.columns),keep='first')
 
     return df
         
 def save_data(df, database_filename):
+    """
+    Save the DataFrame to a SQLite database and a CSV file.
+
+    Parameters:
+    df (pd.DataFrame): DataFrame to be saved.
+    database_filename (str): Filename for the SQLite database.
+    """
     engine = create_engine(f'sqlite:///{database_filename}')
-    df.to_sql("disaster_data_table", engine, index=False)  
+    df.to_sql("disaster_data_table", engine, index=False, if_exists='replace')  
     df.to_csv(r'data\disaster_merged_data.csv')
 
 
 def main():
+    """
+    Main function to execute script functionality based on command line inputs.
+    Requires three command line arguments to run properly.
+    """
     if len(sys.argv) == 4:
 
         messages_filepath, categories_filepath, database_filepath = sys.argv[1:]

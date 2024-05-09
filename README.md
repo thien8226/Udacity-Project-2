@@ -13,3 +13,5 @@
 3. Run your web app: `python run.py`
 
 4. Click the `PREVIEW` button to open the homepage
+
+Link: https://github.com/thien8226/Udacity-Project-2
