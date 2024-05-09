@@ -34,10 +34,11 @@ def load_data(messages_filepath, categories_filepath):
 
     # remove non binary data in one hot dummy columns
     for column in categories.columns[1:]:
+        categories[column] = categories[column].astype(int)
         categories = categories[categories[column].isin([0,1])]
 
     df = pd.merge(messages, categories, on='id')
-        
+
     return df
 
 def clean_data(df):
